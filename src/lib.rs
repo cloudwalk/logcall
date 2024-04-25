@@ -52,7 +52,7 @@ impl MacroArgs {
         self.params
             .as_ref()
             .cloned()
-            .unwrap_or(fn_args.iter().map(|ident| ident.to_string()).collect())
+            .unwrap_or_else(|| fn_args.iter().map(|ident| ident.to_string()).collect())
     }
 }
 
