@@ -143,4 +143,41 @@ async fn main() {
     legacy_async.async_foo(4).await;
     legacy_async.async_bar(4).await.ok();
     legacy_async.async_baz(4).await.ok();
+
+    println!("####  CUSTOM TYPES  ####");
+
+    #[derive(Debug,Clone)]
+    struct MyType(String);
+    #[logcall(ingress = "info")]
+    fn use_my_type(my_param: MyType) {}
+    use_my_type(MyType(String::from("It works!")));
+
+    println!("####  MOVE VALUE  ####");
+
+    #[logcall(egress = "info", ingress = "info")]
+    fn param_is_moved_before_logging_is_issued_1(moved_param: String) -> bool {
+        drop(moved_param);
+        true
+    }
+    param_is_moved_before_logging_is_issued_1(String::from("It will only work if log is serialized to a string before the function body runs"));
+
+    #[logcall(egress = "error", skip=[])]
+    fn param_is_moved_before_logging_is_issued_2(moved_param: String) -> Result<bool, ()> {
+        drop(moved_param);
+        Err(())
+    }
+    _ = param_is_moved_before_logging_is_issued_2(String::from("It will only work if log is serialized to a string before the function body runs"));
+
+    #[derive(Debug,Clone)]
+    struct MyFreakingType {
+        works: String,
+    }
+    #[logcall(egress = "error", skip=[]/*, debug=true*/)]
+    async fn param_is_moved_before_logging_is_issued_3(moved_param: MyFreakingType) -> Result<bool, ()> {
+        drop(moved_param);
+        Err(())?;
+        Ok(false)
+    }
+    _ = param_is_moved_before_logging_is_issued_3(MyFreakingType { works: String::from("It will only work if log is serialized to a string before the function body runs") }).await;
+
 }
